@@ -48,6 +48,7 @@ namespace CameraPlus
 		public bool mouseOverShowsLabels = true;
 		public LabelStyle customNameStyle = LabelStyle.AnimalsDifferent;
 		public bool includeNotTamedAnimals = true;
+		public bool skipCustomRendering = false;
 
 		public KeyCode[] cameraSettingsMod = new[] { KeyCode.LeftShift, KeyCode.None };
 		public KeyCode cameraSettingsKey = KeyCode.Tab;
@@ -94,6 +95,7 @@ namespace CameraPlus
 			Scribe_Values.Look(ref cameraSettingsLoad[1], "cameraSettingsLoad2", KeyCode.None);
 			Scribe_Values.Look(ref cameraSettingsSave[0], "cameraSettingsSave1", KeyCode.LeftAlt);
 			Scribe_Values.Look(ref cameraSettingsSave[1], "cameraSettingsSave2", KeyCode.None);
+			Scribe_Values.Look(ref skipCustomRendering, "skipCustomRendering", false);
 
 			if (Scribe.mode == LoadSaveMode.ResolvingCrossRefs)
 			{
@@ -123,9 +125,9 @@ namespace CameraPlus
 			minRootResult = zoomedInPercent * 2;
 			if (previous != zoomedInPercent && map != null)
 			{
-				var val = Traverse.Create(Find.CameraDriver).Field("rootSize").GetValue<float>();
+				var val = Current.cameraDriverInt.rootSize;
 				if (val != minRootInput)
-					Find.CameraDriver.SetRootPosAndSize(map.rememberedCameraPos.rootPos, minRootInput);
+					Current.cameraDriverInt.SetRootPosAndSize(map.rememberedCameraPos.rootPos, minRootInput);
 			}
 
 			previous = zoomedOutPercent;
@@ -134,9 +136,9 @@ namespace CameraPlus
 			maxRootResult = zoomedOutPercent * 2;
 			if (previous != zoomedOutPercent && map != null)
 			{
-				var val = Traverse.Create(Find.CameraDriver).Field("rootSize").GetValue<float>();
+				var val = Current.cameraDriverInt.rootSize;
 				if (val != maxRootInput)
-					Find.CameraDriver.SetRootPosAndSize(map.rememberedCameraPos.rootPos, maxRootInput);
+					Current.cameraDriverInt.SetRootPosAndSize(map.rememberedCameraPos.rootPos, maxRootInput);
 			}
 
 			list.Gap(12f);
@@ -247,6 +249,7 @@ namespace CameraPlus
 				list.Gap(4f);
 				list.CheckboxLabeled("IncludeNotTamedAnimals".Translate(), ref includeNotTamedAnimals);
 			}
+			list.CheckboxLabeled("Skip custom rendering", ref skipCustomRendering);
 
 			list.Gap(28f);
 

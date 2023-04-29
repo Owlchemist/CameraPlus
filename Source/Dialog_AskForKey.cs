@@ -10,7 +10,7 @@ namespace CameraPlus
 		public Action<KeyCode> callback;
 
 		public override Vector2 InitialSize => new Vector2(400f, 200f);
-		public override float Margin => 0f;
+		protected override float Margin => 0f;
 
 		public Dialog_AskForKey(Action<KeyCode> callback)
 		{

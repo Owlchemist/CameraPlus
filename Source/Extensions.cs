@@ -39,5 +39,19 @@ namespace CameraPlus
 				value = Mathf.RoundToInt(value / roundTo) * roundTo;
 			return 4f + label != null ? 18f : 0f;
 		}
+
+		public static double FastPow(double num, int exp)
+		{
+			double result = 1.0;
+			while (exp > 0)
+			{
+				if (exp % 2 == 1)
+					result *= num;
+				exp >>= 1;
+				num *= num;
+			}
+
+			return result;
+		}
 	}
 }

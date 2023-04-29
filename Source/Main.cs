@@ -1,5 +1,4 @@
-﻿using Brrainz;
-using HarmonyLib;
+﻿using HarmonyLib;
 using RimWorld;
 using RimWorld.Planet;
 using System;
@@ -25,17 +24,12 @@ namespace CameraPlus
 		public static CameraPlusSettings Settings;
 		public static float orthographicSize = -1f;
 
-		// for other mods: set temporarily to true to skip any hiding
-		public static bool skipCustomRendering = false;
-
 		public CameraPlusMain(ModContentPack content) : base(content)
 		{
 			Settings = GetSettings<CameraPlusSettings>();
 
 			var harmony = new Harmony("net.pardeike.rimworld.mod.camera+");
 			harmony.PatchAll();
-
-			CrossPromotion.Install(76561197973010050);
 		}
 
 		public override void DoSettingsWindowContents(Rect inRect)
@@ -81,10 +75,14 @@ namespace CameraPlus
 			}
 		}
 
+		public static bool Prepare()
+		{
+			return CameraPlusMain.Settings.disableCameraShake;
+		}
+		
 		public static void Prefix(CameraDriver __instance)
 		{
-			if (CameraPlusMain.Settings.disableCameraShake)
-				__instance.shaker.curShakeMag = 0;
+			__instance.shaker.curShakeMag = 0;
 		}
 
 		public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -106,22 +104,17 @@ namespace CameraPlus
 		}
 	}
 
-	[HarmonyPatch(typeof(TimeControls), nameof(TimeControls.DoTimeControlsGUI))]
-	static class TimeControls_DoTimeControlsGUI_Patch
-	{
-		public static void Prefix()
-		{
-			Tools.HandleHotkeys();
-		}
-	}
 
 	[HarmonyPatch(typeof(CameraDriver), nameof(CameraDriver.CalculateCurInputDollyVect))]
 	static class CameraDriver_CalculateCurInputDollyVect_Patch
 	{
+		public static bool Prepare()
+		{
+			return CameraPlusMain.orthographicSize != -1f;
+		}
 		public static void Postfix(ref Vector2 __result)
 		{
-			if (CameraPlusMain.orthographicSize != -1f)
-				__result *= Tools.GetScreenEdgeDollyFactor(CameraPlusMain.orthographicSize);
+			__result *= Tools.GetScreenEdgeDollyFactor(CameraPlusMain.orthographicSize);
 		}
 	}
 
@@ -129,18 +122,24 @@ namespace CameraPlus
 	[HarmonyPatch(new Type[] { typeof(Vector3), typeof(Map), typeof(string), typeof(Color), typeof(float) })]
 	static class MoteMaker_ThrowText_Patch
 	{
+		public static bool Prepare()
+		{
+			if (CameraPlusMain.Settings.skipCustomRendering || !CameraPlusMain.Settings.hideNamesWhenZoomedOut) return false;
+			return true;
+		}
 		public static bool Prefix(Vector3 loc)
 		{
-			if (CameraPlusMain.skipCustomRendering)
+			var settings = CameraPlusMain.Settings;
+			if (settings.skipCustomRendering)
 				return true;
 
-			if (CameraPlusMain.Settings.hideNamesWhenZoomedOut == false)
+			if (settings.hideNamesWhenZoomedOut == false)
 				return true;
 
-			if (Find.CameraDriver.CurrentZoom == CameraZoomRange.Closest)
+			if (Current.cameraDriverInt.CurrentZoom == CameraZoomRange.Closest)
 				return true;
 
-			if (CameraPlusMain.Settings.mouseOverShowsLabels)
+			if (settings.mouseOverShowsLabels)
 				return Tools.MouseDistanceSquared(loc, true) <= 2.25f;
 
 			return false;
@@ -151,12 +150,15 @@ namespace CameraPlus
 	[HarmonyPatch(new Type[] { typeof(Vector3), typeof(Rot4?), typeof(bool) })]
 	static class PawnRenderer_RenderPawnAt_Patch
 	{
+		public static bool Prepare()
+		{
+			if (CameraPlusMain.Settings.skipCustomRendering || !CameraPlusMain.Settings.hideNamesWhenZoomedOut) return false;
+			return true;
+		}
+		
 		[HarmonyPriority(10000)]
 		public static bool Prefix(Pawn ___pawn)
 		{
-			if (CameraPlusMain.skipCustomRendering)
-				return true;
-
 			return Tools.ShouldShowDot(___pawn) == false;
 		}
 
@@ -171,6 +173,11 @@ namespace CameraPlus
 	[HarmonyPatch(typeof(PawnUIOverlay), nameof(PawnUIOverlay.DrawPawnGUIOverlay))]
 	static class PawnUIOverlay_DrawPawnGUIOverlay_Patch
 	{
+		public static bool Prepare()
+		{
+			return !CameraPlusMain.Settings.skipCustomRendering;
+		}
+		
 		// fake everything being humanlike so Prefs.AnimalNameMode is ignored (we handle it ourselves)
 		public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
 		{
@@ -189,9 +196,6 @@ namespace CameraPlus
 		[HarmonyPriority(10000)]
 		public static bool Prefix(Pawn ___pawn)
 		{
-			if (CameraPlusMain.skipCustomRendering)
-				return true;
-
 			if (!___pawn.Spawned || ___pawn.Map.fogGrid.IsFogged(___pawn.Position))
 				return true;
 			if (___pawn.RaceProps.Humanlike)
@@ -216,12 +220,14 @@ namespace CameraPlus
 	[HarmonyPatch(new Type[] { typeof(Pawn), typeof(Vector2), typeof(float), typeof(float), typeof(Dictionary<string, string>), typeof(GameFont), typeof(bool), typeof(bool) })]
 	static class GenMapUI_DrawPawnLabel_Patch
 	{
+		public static bool Prepare()
+		{
+			return !CameraPlusMain.Settings.skipCustomRendering;
+		}
+		
 		[HarmonyPriority(10000)]
 		public static bool Prefix(Pawn pawn, float truncateToWidth)
 		{
-			if (CameraPlusMain.skipCustomRendering)
-				return true;
-
 			if (truncateToWidth != 9999f)
 				return true;
 
@@ -252,6 +258,11 @@ namespace CameraPlus
 	{
 		static readonly MethodInfo m_GetAdaptedGameFont = SymbolExtensions.GetMethodInfo(() => GetAdaptedGameFont(0f));
 
+		public static bool Prepare()
+		{
+			return !CameraPlusMain.Settings.skipCustomRendering;
+		}
+		
 		static GameFont GetAdaptedGameFont(float rootSize)
 		{
 			if (rootSize < 11f)
@@ -264,9 +275,6 @@ namespace CameraPlus
 		[HarmonyPriority(10000)]
 		public static bool Prefix(Vector2 screenPos)
 		{
-			if (CameraPlusMain.skipCustomRendering)
-				return true;
-
 			return Tools.ShouldShowLabel(null, screenPos);
 		}
 
@@ -296,20 +304,19 @@ namespace CameraPlus
 	static class CameraDriver_CurrentZoom_Patch
 	{
 		// these values are from vanilla. we remap them to the range 30 - 60
-		static readonly float[] sizes = new[] { 12f, 13.8f, 42f, 57f }
-				.Select(f => Tools.LerpDoubleSafe(12, 57, 30, 60, f))
-				.ToArray();
+		static readonly float[] sizes = new[] { 12f, 13.8f, 42f, 57f } .Select(f => Tools.LerpDoubleSafe(12, 57, 30, 60, f)) .ToArray();
+		static readonly float size0 = sizes[0], size1 = sizes[1], size2 = sizes[2], size3 = sizes[3];
 
 		public static bool Prefix(ref CameraZoomRange __result, float ___rootSize)
 		{
 			var lerped = Tools.LerpRootSize(___rootSize);
-			if (lerped < sizes[0])
+			if (lerped < size0)
 				__result = CameraZoomRange.Closest;
-			else if (lerped < sizes[1])
+			else if (lerped < size1)
 				__result = CameraZoomRange.Close;
-			else if (lerped < sizes[2])
+			else if (lerped < size2)
 				__result = CameraZoomRange.Middle;
-			else if (lerped < sizes[3])
+			else if (lerped < size3)
 				__result = CameraZoomRange.Far;
 			else
 				__result = CameraZoomRange.Furthest;
@@ -443,16 +450,20 @@ namespace CameraPlus
 	static class Map_MapUpdate_Patch
 	{
 		static bool done = false;
+		
+		public static bool Prepare() => ModLister.HasActiveModWithName("Save Our Ship 2");
+		
 		static void FixSoSMaterial()
 		{
 			done = true;
-			var type = AccessTools.TypeByName("SaveOurShip2.RenderPlanetBehindMap");
+			var type = AccessTools.TypeByName("SaveOurShip2.ResourceBank");
 			if (type != null)
 			{
 				var mat = Traverse.Create(type).Field("PlanetMaterial").GetValue<Material>();
 				mat.mainTextureOffset = new Vector2(0.3f, 0.3f);
 				mat.mainTextureScale = new Vector2(0.4f, 0.4f);
 			}
+			new Harmony("net.pardeike.rimworld.mod.camera+.unpatcher").Unpatch(AccessTools.Method(typeof(Map), nameof(Map.MapUpdate)), HarmonyPatchType.Postfix, "net.pardeike.rimworld.mod.camera+");
 		}
 
 		public static void Postfix(Map __instance)
@@ -461,7 +472,7 @@ namespace CameraPlus
 				return;
 			if (WorldRendererUtility.WorldRenderedNow)
 				return;
-			if (Find.CurrentMap != __instance)
+			if (Current.gameInt.CurrentMap != __instance)
 				return;
 			FixSoSMaterial();
 		}
@@ -499,16 +510,6 @@ namespace CameraPlus
 		}
 	}
 
-	[HarmonyPatch(typeof(Root))]
-	[HarmonyPatch(nameof(Root.OnGUI))]
-	static class Root_OnGUI_Patch
-	{
-		public static void Postfix()
-		{
-			KeyBindingDef_KeyDownEvent_Patch.CleanupAtEndOfFrame();
-		}
-	}
-
 	[HarmonyPatch(typeof(Game))]
 	[HarmonyPatch(nameof(Game.UpdatePlay))]
 	static class Game_UpdatePlay_Patch
@@ -518,10 +519,10 @@ namespace CameraPlus
 
 		public static void Postfix()
 		{
-			if (Tools.HasSnapback && Find.TickManager.Paused == false)
+			if (Tools.HasSnapback && Current.gameInt.tickManager.Paused == false)
 				Tools.RestoreSnapback();
 
-			if (KeyBindingDefOf.TogglePause.IsDown && Find.TickManager.Paused)
+			if (KeyBindingDefOf.TogglePause.IsDown && Current.gameInt.tickManager.Paused)
 			{
 				var now = DateTime.Now;
 				if (lastChange == DateTime.MinValue)
@@ -567,6 +568,7 @@ namespace CameraPlus
 	{
 		public static void Postfix()
 		{
+			KeyBindingDef_KeyDownEvent_Patch.CleanupAtEndOfFrame();
 			if (Tools.HasSnapback == false)
 				return;
 
@@ -575,6 +577,15 @@ namespace CameraPlus
 			GUI.color = new Color(0, 0, 0, 0.5f);
 			Widgets.DrawBox(rect, 20);
 			GUI.color = color;
+		}
+	}
+
+	[HarmonyPatch(typeof(TimeControls), nameof(TimeControls.DoTimeControlsGUI))]
+	static class TimeControls_DoTimeControlsGUI_Patch
+	{
+		public static void Prefix()
+		{
+			Tools.HandleHotkeys();
 		}
 	}
 }

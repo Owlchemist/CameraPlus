@@ -271,8 +271,8 @@ namespace CameraPlus
 
 			if (minRootResult == maxRootResult)
 				return minRootResult;
-			var factor = (maxRootResult - minRootResult) / Math.Pow(maxRootInput - minRootInput, 2 * n);
-			var y = minRootResult + Math.Pow(x - minRootInput, 2 * n) * factor;
+			var factor = (maxRootResult - minRootResult) / Extensions.FastPow(maxRootInput - minRootInput, 2 * n);
+			var y = minRootResult + Extensions.FastPow(x - minRootInput, 2 * n) * factor;
 			return (float)y;
 		}
 
@@ -302,8 +302,8 @@ namespace CameraPlus
 		{
 			// 0.15f comes from the old zoomedInDollyFrictionPercent/zoomedOutDollyFrictionPercent
 			//
-			var minVal = 1f - 0.15f;
-			var maxVal = 1f - 0.15f;
+			var minVal = 0.85f;
+			var maxVal = 0.85f;
 			return LerpDoubleSafe(minRootResult, maxRootResult, minVal, maxVal, orthSize);
 		}
 
@@ -376,7 +376,7 @@ namespace CameraPlus
 		public static void CreateSnapback()
 		{
 			Defs.SnapBack.PlayOneShotOnCamera(null);
-			var cameraDriver = Find.CameraDriver;
+			var cameraDriver = Current.cameraDriverInt;
 			snapbackRootPos = cameraDriver.rootPos;
 			snapbackRootSize = cameraDriver.rootSize;
 		}
@@ -391,20 +391,20 @@ namespace CameraPlus
 
 		public static void RestoreSnapback()
 		{
-			var tm = Find.TickManager;
+			var tm = Current.gameInt.tickManager;
 			var savedSpeed = tm.curTimeSpeed;
 
 			IEnumerator ApplyRootPosAndSize()
 			{
 				yield return new WaitForSeconds(0.35f);
-				Find.CameraDriver.SetRootPosAndSize(snapbackRootPos, snapbackRootSize);
+				Current.cameraDriverInt.SetRootPosAndSize(snapbackRootPos, snapbackRootSize);
 				ResetSnapback();
 				tm.curTimeSpeed = savedSpeed;
 			}
 
 			tm.curTimeSpeed = TimeSpeed.Paused;
 			Defs.ApplySnap.PlayOneShotOnCamera(null);
-			_ = Find.CameraDriver.StartCoroutine(ApplyRootPosAndSize());
+			_ = Current.cameraDriverInt.StartCoroutine(ApplyRootPosAndSize());
 		}
 
 		public static void HandleHotkeys()
@@ -447,7 +447,7 @@ namespace CameraPlus
 			if (numKey == 0)
 				return;
 
-			var map = Find.CurrentMap;
+			var map = Current.gameInt.CurrentMap;
 			if (map == null)
 				return;
 
@@ -461,7 +461,7 @@ namespace CameraPlus
 					{
 						var view = savedViews.views[numKey - 1];
 						if (view != null)
-							Find.CameraDriver.SetRootPosAndSize(view.rootPos, view.rootSize);
+							Current.cameraDriverInt.SetRootPosAndSize(view.rootPos, view.rootSize);
 						Event.current.Use();
 					}
 
@@ -471,7 +471,7 @@ namespace CameraPlus
 				if (m1 == KeyCode.None || Input.GetKey(m1))
 					if (m2 == KeyCode.None || Input.GetKey(m2))
 					{
-						var cameraDriver = Find.CameraDriver;
+						var cameraDriver = Current.cameraDriverInt;
 						savedViews.views[numKey - 1] = new RememberedCameraPos(map)
 						{
 							rootPos = cameraDriver.rootPos,

@@ -9,6 +9,7 @@ using System.Reflection.Emit;
 using UnityEngine;
 using Verse;
 using Verse.Sound;
+using Settings = CameraPlus.CameraPlusSettings;
 
 namespace CameraPlus
 {
@@ -21,12 +22,11 @@ namespace CameraPlus
 	
 	public class CameraPlusMain : Mod
 	{
-		public static CameraPlusSettings Settings;
 		public static float orthographicSize = -1f;
 
 		public CameraPlusMain(ModContentPack content) : base(content)
 		{
-			Settings = GetSettings<CameraPlusSettings>();
+			GetSettings<CameraPlusSettings>();
 
 			var harmony = new Harmony("net.pardeike.rimworld.mod.camera+");
 			harmony.PatchAll();
@@ -34,7 +34,7 @@ namespace CameraPlus
 
 		public override void DoSettingsWindowContents(Rect inRect)
 		{
-			Settings.DoWindowContents(inRect);
+			GetSettings<CameraPlusSettings>().DoWindowContents(inRect);
 		}
 
 		public override string SettingsCategory()
@@ -59,7 +59,7 @@ namespace CameraPlus
 				return;
 			}
 
-			if (Event.current.shift || CameraPlusMain.Settings.zoomToMouse == false)
+			if (Event.current.shift || Settings.zoomToMouse == false)
 			{
 				driver.rootSize = rootSize;
 				return;
@@ -77,7 +77,7 @@ namespace CameraPlus
 
 		public static bool Prepare()
 		{
-			return CameraPlusMain.Settings.disableCameraShake;
+			return Settings.disableCameraShake;
 		}
 		
 		public static void Prefix(CameraDriver __instance)
@@ -124,22 +124,21 @@ namespace CameraPlus
 	{
 		public static bool Prepare()
 		{
-			if (CameraPlusMain.Settings.skipCustomRendering || !CameraPlusMain.Settings.hideNamesWhenZoomedOut) return false;
+			if (Settings.skipCustomRendering || !Settings.hideNamesWhenZoomedOut) return false;
 			return true;
 		}
 		public static bool Prefix(Vector3 loc)
 		{
-			var settings = CameraPlusMain.Settings;
-			if (settings.skipCustomRendering)
+			if (Settings.skipCustomRendering)
 				return true;
 
-			if (settings.hideNamesWhenZoomedOut == false)
+			if (Settings.hideNamesWhenZoomedOut == false)
 				return true;
 
 			if (Current.cameraDriverInt.CurrentZoom == CameraZoomRange.Closest)
 				return true;
 
-			if (settings.mouseOverShowsLabels)
+			if (Settings.mouseOverShowsLabels)
 				return Tools.MouseDistanceSquared(loc, true) <= 2.25f;
 
 			return false;
@@ -152,7 +151,7 @@ namespace CameraPlus
 	{
 		public static bool Prepare()
 		{
-			if (CameraPlusMain.Settings.skipCustomRendering || !CameraPlusMain.Settings.hideNamesWhenZoomedOut) return false;
+			if (Settings.skipCustomRendering || !Settings.hideNamesWhenZoomedOut) return false;
 			return true;
 		}
 		
@@ -165,7 +164,7 @@ namespace CameraPlus
 		[HarmonyPriority(10000)]
 		public static void Postfix(Pawn ___pawn)
 		{
-			if (CameraPlusMain.Settings.hideNamesWhenZoomedOut && CameraPlusMain.Settings.customNameStyle != LabelStyle.HideAnimals)
+			if (Settings.hideNamesWhenZoomedOut && Settings.customNameStyle != LabelStyle.HideAnimals)
 				_ = Tools.GetMainColor(___pawn); // trigger caching
 		}
 	}
@@ -175,7 +174,7 @@ namespace CameraPlus
 	{
 		public static bool Prepare()
 		{
-			return !CameraPlusMain.Settings.skipCustomRendering;
+			return !Settings.skipCustomRendering;
 		}
 		
 		// fake everything being humanlike so Prefs.AnimalNameMode is ignored (we handle it ourselves)
@@ -222,7 +221,7 @@ namespace CameraPlus
 	{
 		public static bool Prepare()
 		{
-			return !CameraPlusMain.Settings.skipCustomRendering;
+			return !Settings.skipCustomRendering;
 		}
 		
 		[HarmonyPriority(10000)]
@@ -260,7 +259,7 @@ namespace CameraPlus
 
 		public static bool Prepare()
 		{
-			return !CameraPlusMain.Settings.skipCustomRendering;
+			return !Settings.skipCustomRendering;
 		}
 		
 		static GameFont GetAdaptedGameFont(float rootSize)
@@ -336,7 +335,7 @@ namespace CameraPlus
 			var pos = camera.transform.position;
 			var cameraSpan = CameraPlusSettings.maxRootOutput - CameraPlusSettings.minRootOutput;
 			var f = (pos.y - CameraPlusSettings.minRootOutput) / cameraSpan;
-			f *= 1 - CameraPlusMain.Settings.soundNearness;
+			f *= 1 - Settings.soundNearness;
 			pos.y = CameraPlusSettings.minRootOutput + f * cameraSpan;
 			camera.transform.position = pos;
 

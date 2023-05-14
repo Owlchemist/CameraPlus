@@ -30,42 +30,38 @@ namespace CameraPlus
 
 	public class CameraPlusSettings : ModSettings
 	{
-		public float zoomedOutPercent = 65;
-		public float zoomedInPercent = 1;
-		public int exponentiality = 1;
-		public float zoomedOutDollyPercent = 1;
-		public float zoomedInDollyPercent = 1;
-		public float zoomedOutScreenEdgeDollyFactor = 0.5f;
-		public float zoomedInScreenEdgeDollyFactor = 0.5f;
-		public bool stickyMiddleMouse = false;
-		public bool zoomToMouse = true;
-		public bool disableCameraShake = false;
-		public float soundNearness = 0;
-		public bool hideNamesWhenZoomedOut = true;
-		public int dotSize = 9;
-		public int hidePawnLabelBelow = 9;
-		public int hideThingLabelBelow = 32;
-		public bool mouseOverShowsLabels = true;
-		public LabelStyle customNameStyle = LabelStyle.AnimalsDifferent;
-		public bool includeNotTamedAnimals = true;
-		public bool skipCustomRendering = false;
-
-		public KeyCode[] cameraSettingsMod = new[] { KeyCode.LeftShift, KeyCode.None };
-		public KeyCode cameraSettingsKey = KeyCode.Tab;
-		public KeyCode[] cameraSettingsLoad = new[] { KeyCode.LeftShift, KeyCode.None };
-		public KeyCode[] cameraSettingsSave = new[] { KeyCode.LeftAlt, KeyCode.None };
-
-		public static float minRootResult = 2;
-		public static float maxRootResult = 130;
-
-		public static readonly float minRootInput = 11;
-		public static readonly float maxRootInput = 60;
-
-		public static readonly float minRootOutput = 15;
-		public static readonly float maxRootOutput = 65;
-
-		public static readonly float nearestHeight = 32;
-		public static readonly float farOutHeight = 256;
+		public static float zoomedOutPercent = 65f,
+			zoomedInPercent = 1f,
+			zoomedOutDollyPercent = 1f,
+			zoomedInDollyPercent = 1f,
+			zoomedOutScreenEdgeDollyFactor = 0.5f,
+			zoomedInScreenEdgeDollyFactor = 0.5f,
+			soundNearness = 0f,
+			minRootResult = 2f,
+			maxRootResult = 130f;
+		public static int exponentiality = 1,
+			dotSize = 9,
+			hidePawnLabelBelow = 9,
+			hideThingLabelBelow = 32;
+		public static bool stickyMiddleMouse = false,
+			zoomToMouse = true,
+			disableCameraShake = false,
+			hideNamesWhenZoomedOut = true,
+			mouseOverShowsLabels = true,
+			includeNotTamedAnimals = true,
+			skipCustomRendering = false;
+		public static LabelStyle customNameStyle = LabelStyle.AnimalsDifferent;
+		public static KeyCode cameraSettingsKey = KeyCode.Tab;
+		public static KeyCode[] cameraSettingsMod = new[] { KeyCode.LeftShift, KeyCode.None },
+			cameraSettingsLoad = new[] { KeyCode.LeftShift, KeyCode.None },
+			cameraSettingsSave = new[] { KeyCode.LeftAlt, KeyCode.None };
+		
+		public static readonly float minRootInput = 11f,
+			maxRootInput = 60f,
+			minRootOutput = 15f,
+			maxRootOutput = 65f,
+			nearestHeight = 32f,
+			farOutHeight = 256f;
 
 		public override void ExposeData()
 		{

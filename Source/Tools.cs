@@ -8,6 +8,7 @@ using UnityEngine;
 using Verse;
 using Verse.Noise;
 using Verse.Sound;
+using Settings = CameraPlus.CameraPlusSettings;
 
 namespace CameraPlus
 {
@@ -33,41 +34,41 @@ namespace CameraPlus
 
 		public static bool ShouldShowDot(Pawn pawn)
 		{
-			if (CameraPlusMain.Settings.hideNamesWhenZoomedOut == false)
+			if (Settings.hideNamesWhenZoomedOut == false)
 				return false;
 
-			if (CameraPlusMain.Settings.customNameStyle == LabelStyle.HideAnimals && pawn.RaceProps.Animal)
+			if (Settings.customNameStyle == LabelStyle.HideAnimals && pawn.RaceProps.Animal)
 				return false;
 
-			if (CameraPlusMain.Settings.mouseOverShowsLabels && MouseDistanceSquared(pawn.DrawPos, true) <= 2.25f)
+			if (Settings.mouseOverShowsLabels && MouseDistanceSquared(pawn.DrawPos, true) <= 2.25f)
 				return false;
 
 			var len = FastUI.CurUICellSize;
-			var isSmall = len <= CameraPlusMain.Settings.dotSize;
+			var isSmall = len <= Settings.dotSize;
 			var tamedAnimal = pawn.RaceProps.Animal && pawn.Name != null;
-			return isSmall && (CameraPlusMain.Settings.includeNotTamedAnimals || pawn.RaceProps.Animal == false || tamedAnimal);
+			return isSmall && (Settings.includeNotTamedAnimals || pawn.RaceProps.Animal == false || tamedAnimal);
 		}
 
 		public static bool ShouldShowLabel(Thing thing, Vector2 screenPos = default)
 		{
-			if (CameraPlusMain.Settings.hideNamesWhenZoomedOut == false)
+			if (Settings.hideNamesWhenZoomedOut == false)
 				return true;
 
 			var isPawn = thing is Pawn;
 
-			if (CameraPlusMain.Settings.mouseOverShowsLabels && MouseDistanceSquared(thing?.DrawPos ?? screenPos, isPawn) <= 2.25f)
+			if (Settings.mouseOverShowsLabels && MouseDistanceSquared(thing?.DrawPos ?? screenPos, isPawn) <= 2.25f)
 				return true;
 
 			var len = FastUI.CurUICellSize;
 
-			var lower = isPawn ? CameraPlusMain.Settings.hidePawnLabelBelow : CameraPlusMain.Settings.hideThingLabelBelow;
+			var lower = isPawn ? Settings.hidePawnLabelBelow : Settings.hideThingLabelBelow;
 			if (len <= lower)
 				return false;
 
-			if (isPawn && CameraPlusMain.Settings.customNameStyle == LabelStyle.HideAnimals && (thing as Pawn).RaceProps.Animal)
+			if (isPawn && Settings.customNameStyle == LabelStyle.HideAnimals && (thing as Pawn).RaceProps.Animal)
 				return true;
 
-			if (isPawn && len <= CameraPlusMain.Settings.dotSize)
+			if (isPawn && len <= Settings.dotSize)
 				return false;
 
 			return true;
@@ -213,7 +214,7 @@ namespace CameraPlus
 			}
 
 			var isAnimal = pawn.RaceProps.Animal && pawn.Name != null;
-			var hideAnimalMarkers = CameraPlusMain.Settings.customNameStyle == LabelStyle.HideAnimals;
+			var hideAnimalMarkers = Settings.customNameStyle == LabelStyle.HideAnimals;
 			if (isAnimal && hideAnimalMarkers)
 			{
 				innerColor = default;
@@ -250,7 +251,7 @@ namespace CameraPlus
 			}
 
 			var isAnimal = pawn.RaceProps.Animal;
-			var customAnimalStyle = CameraPlusMain.Settings.customNameStyle == LabelStyle.AnimalsDifferent;
+			var customAnimalStyle = Settings.customNameStyle == LabelStyle.AnimalsDifferent;
 			innerTexture = isAnimal && customAnimalStyle ? innerAnimalTexture : innerColonistTexture;
 			outerTexture = isAnimal && customAnimalStyle ? outerAnimalTexture : outerColonistTexture;
 			return true;
@@ -265,7 +266,7 @@ namespace CameraPlus
 
 		public static float LerpRootSize(float x)
 		{
-			var n = CameraPlusMain.Settings.exponentiality;
+			var n = Settings.exponentiality;
 			if (n == 0)
 				return LerpDoubleSafe(minRootInput, maxRootInput, minRootResult, maxRootResult, x);
 
@@ -279,22 +280,22 @@ namespace CameraPlus
 		public static float GetDollyRateKeys(float orthSize)
 		{
 			var f = GetScreenEdgeDollyFactor(orthSize);
-			var zoomedIn = orthSize * CameraPlusMain.Settings.zoomedInDollyPercent * 4 / f;
-			var zoomedOut = orthSize * CameraPlusMain.Settings.zoomedOutDollyPercent / f;
+			var zoomedIn = orthSize * Settings.zoomedInDollyPercent * 4 / f;
+			var zoomedOut = orthSize * Settings.zoomedOutDollyPercent / f;
 			return LerpDoubleSafe(minRootResult, maxRootResult, zoomedIn, zoomedOut, orthSize);
 		}
 
 		public static float GetScreenEdgeDollyFactor(float orthSize)
 		{
-			var zoomedIn = CameraPlusMain.Settings.zoomedInScreenEdgeDollyFactor * 30;
-			var zoomedOut = CameraPlusMain.Settings.zoomedOutScreenEdgeDollyFactor * 30;
+			var zoomedIn = Settings.zoomedInScreenEdgeDollyFactor * 30;
+			var zoomedOut = Settings.zoomedOutScreenEdgeDollyFactor * 30;
 			return LerpDoubleSafe(minRootResult, maxRootResult, zoomedIn, zoomedOut, orthSize);
 		}
 
 		public static float GetDollyRateMouse(float orthSize)
 		{
-			var zoomedIn = 1f * CameraPlusMain.Settings.zoomedInDollyPercent;
-			var zoomedOut = 10f * CameraPlusMain.Settings.zoomedOutDollyPercent;
+			var zoomedIn = 1f * Settings.zoomedInDollyPercent;
+			var zoomedOut = 10f * Settings.zoomedOutDollyPercent;
 			return LerpDoubleSafe(minRootResult, maxRootResult, zoomedIn, zoomedOut, orthSize);
 		}
 
@@ -412,13 +413,12 @@ namespace CameraPlus
 			if (Event.current.type == EventType.Repaint)
 				return;
 
-			var settings = CameraPlusMain.Settings;
 			KeyCode m1, m2;
 
-			if (Input.GetKey(settings.cameraSettingsKey))
+			if (Input.GetKey(Settings.cameraSettingsKey))
 			{
-				m1 = settings.cameraSettingsMod[0];
-				m2 = settings.cameraSettingsMod[1];
+				m1 = Settings.cameraSettingsMod[0];
+				m2 = Settings.cameraSettingsMod[1];
 				if (m1 == KeyCode.None && m2 == KeyCode.None)
 					return;
 
@@ -453,8 +453,8 @@ namespace CameraPlus
 
 			var savedViews = map.GetComponent<SavedViews>();
 
-			m1 = settings.cameraSettingsLoad[0];
-			m2 = settings.cameraSettingsLoad[1];
+			m1 = Settings.cameraSettingsLoad[0];
+			m2 = Settings.cameraSettingsLoad[1];
 			if (m1 != KeyCode.None || m2 != KeyCode.None)
 				if (m1 == KeyCode.None || Input.GetKey(m1))
 					if (m2 == KeyCode.None || Input.GetKey(m2))
@@ -465,8 +465,8 @@ namespace CameraPlus
 						Event.current.Use();
 					}
 
-			m1 = settings.cameraSettingsSave[0];
-			m2 = settings.cameraSettingsSave[1];
+			m1 = Settings.cameraSettingsSave[0];
+			m2 = Settings.cameraSettingsSave[1];
 			if (m1 != KeyCode.None || m2 != KeyCode.None)
 				if (m1 == KeyCode.None || Input.GetKey(m1))
 					if (m2 == KeyCode.None || Input.GetKey(m2))
